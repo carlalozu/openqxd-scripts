@@ -1,0 +1,7 @@
+srun -A hck -C gpu ./executable
+srun -A hck -C gpu –reservation=eurohack26 ./executable
+
+
+uenv image pull prgenv-gnu/26.3:v1
+uenv start --view=modules prgenv-gnu/26.3:v1
+module load cuda cray-mpich

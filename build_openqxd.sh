@@ -1,4 +1,4 @@
-export SCRATCH="/scratch/calopez"
+
 export OPENQXD_DIR="$SCRATCH/openQxD-devel"
 export QUDA_BUILD_DIR="$SCRATCH/quda-build"
 export QUDA="ON"

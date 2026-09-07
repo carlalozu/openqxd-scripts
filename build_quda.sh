@@ -2,13 +2,12 @@
 # module load cuda/12.9.0 cray-mpich/8.1.32
 
 
-export SCRATCH=/scratch/calopez
 export SCRIPTS_DIR=$SCRATCH/lattice-scripts/quda
 export QUDA_DIR=$SCRATCH/quda
 
 cd $SCRATCH
 
-computer=geno
+computer=daint
 cp $SCRIPTS_DIR/CMakePresets.json $QUDA_DIR/CMakePresets.json
 cmake -S quda/ -B quda-build --preset="$computer-quda"
 cmake --build quda-build -- -j8
