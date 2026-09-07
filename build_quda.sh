@@ -2,7 +2,7 @@
 # module load cuda/12.9.0 cray-mpich/8.1.32
 
 
-export SCRIPTS_DIR=$SCRATCH/lattice-scripts/quda
+export SCRIPTS_DIR=$SCRATCH/openqxd-scripts
 export QUDA_DIR=$SCRATCH/quda
 
 cd $SCRATCH
@@ -10,7 +10,9 @@ cd $SCRATCH
 computer=daint
 cp $SCRIPTS_DIR/CMakePresets.json $QUDA_DIR/CMakePresets.json
 cmake -S quda/ -B quda-build --preset="$computer-quda"
-cmake --build quda-build -- -j8
+cmake --build quda-build -- -j
+
+## Run tests
 
 l0=16
 l1=16
