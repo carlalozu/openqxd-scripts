@@ -10,6 +10,6 @@ cd $SCRATCH
 # rm -rf quda-build
 
 computer=daint
-cp $SCRIPTS_DIR/CMakePresets.json $QUDA_DIR/CMakePresets.json
+cp -n "$SCRIPTS_DIR/CMakePresets.json" "$QUDA_DIR/CMakePresets.json"
 cmake -S quda/ -B quda-build --preset="$computer-quda"
 cmake --build quda-build -- -j16

@@ -32,5 +32,17 @@ bash build_openqxd.sh
 
 echo "Running force tests"
 cd $OPENQXD_BUILD_DIR/devel/forces
+mkdir -p $OPENQXD_BUILD_DIR/devel/forces/check6_res
 
+# rm -f check10.log
 srun -n8 test6
+# srun -n8 test10
+srun -n8 check6 -i check6.in -bc 3 -cs 1
+# srun -n8 check9 -i check9.in -bc 3 -cs 1
+# srun -n8 check10 -i check10.in -bc 3 -cs 1
+
+# echo "Running quda tests"
+# cd $OPENQXD_BUILD_DIR/devel/quda
+# rm -f check_dwhat.log
+# srun -n8 check_mscg
+# srun -n8 check_Dwhat_EO
