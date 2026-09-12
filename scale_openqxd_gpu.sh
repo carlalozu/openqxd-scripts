@@ -25,18 +25,19 @@ mkdir -p $CACHE_DIR
 # ---- scaling test setup --------------------------------------------------
 # Each entry: "L0 L1 L2 L3" (local lattice per rank). openQxD needs L_i even, >= 4.
 CONFIGS=(
-    "8  8  8  8"
-    "8  12 12 12"
     "16 8  8  8"
-    "16 16 16 16"
+    "24 12 12 12"
     "32 16 16 16"
-    "32 32 32 32"
+    "48 24 24 24"
+    "64 32 32 32"
 )
 NPROC=(1 2 2 2)
 NRANKS=8
 
 RESULTS_DIR="$SCRATCH/scaling_check6_$(date +%Y%m%d_%H%M%S)"
 mkdir -p "$RESULTS_DIR"
+FORCE1_CSV="$RESULTS_DIR/force1_breakdown.csv"
+echo "idx,tag,global_lattice,nranks,test6_global_ms,section,calls,self_ms,incl_ms,ms_per_call,pct_global" > "$FORCE1_CSV"
 GLOBAL_H="$OPENQXD_DIR/include/global.h"
 
 for i in 0 1 2 3; do
@@ -50,10 +51,11 @@ for idx in "${!CONFIGS[@]}"; do
     read -r L0 L1 L2 L3 <<< "${CONFIGS[$idx]}"
     L=($L0 $L1 $L2 $L3)
     TAG="L${L0}x${L1}x${L2}x${L3}"
+    GLAT="$((L0*NPROC[0]))x$((L1*NPROC[1]))x$((L2*NPROC[2]))x$((L3*NPROC[3]))"
 
     echo "=========================================================="
     echo " Config $idx: local ${TAG}"
-    echo " global lattice: $((L0*NPROC[0])) x $((L1*NPROC[1])) x $((L2*NPROC[2])) x $((L3*NPROC[3])),  ${NRANKS} GPUs"
+    echo " global lattice: ${GLAT},  ${NRANKS} GPUs"
     echo "=========================================================="
 
     for i in 0 1 2 3; do
@@ -70,16 +72,30 @@ for idx in "${!CONFIGS[@]}"; do
     mkdir -p "$RUN_DIR"
 
     cd $OPENQXD_BUILD_DIR/devel/forces
-    rm -rf check6 *.log
-    mkdir -p check6
+    rm -f *.log
 
     echo "Running force tests ($TAG)"
-    srun -n${NRANKS} test6
-    srun -n${NRANKS} check6 -i check6.in -bc 3 -cs 1
+    srun -n${NRANKS} ./test6
 
-    echo "$idx $TAG  test6: $((t1-t0)) s  check6: $((t2-t1)) s" | tee -a "$RESULTS_DIR/timings.txt"
+    # Timing comes from the openQxD profiler table at the end of test6.log
+    # (GLOBAL row: module section calls self(ms) incl(ms) ms/call % global)
+    T6_MS=$(awk '$1=="GLOBAL"{t=$4} END{if(t!="")print t; else print "NA"}' test6.log)
+    echo "$idx $TAG  test6 GLOBAL: ${T6_MS} ms" | tee -a "$RESULTS_DIR/timings.txt"
 
-    cp -r *.log check6 "$RUN_DIR/" 2>/dev/null
+    # Per-solver force1 breakdown from the same table, one row per solver,
+    # appended so every config ends up in the same file.
+    awk -v idx="$idx" -v tag="$TAG" -v glat="$GLAT" -v nr="$NRANKS" -v tot="$T6_MS" '
+        /^-+$/        { cur=""; next }
+        {
+            mod = substr($0,1,11); gsub(/ /,"",mod)
+            if (mod != "") cur = mod
+            if (cur != "force1") next
+            if (split(substr($0,12), f, " ") < 6) next
+            printf "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", \
+                   idx, tag, glat, nr, tot, f[1], f[2], f[3], f[4], f[5], f[6]
+        }' test6.log >> "$FORCE1_CSV"
+
+    cp *.log "$RUN_DIR/" 2>/dev/null
     cp $GLOBAL_H "$RUN_DIR/global.h"
     cd $SCRATCH
 done
