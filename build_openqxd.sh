@@ -24,8 +24,9 @@ perl -i -pe "s/#define NPROC2_BLK \\d+/#define NPROC2_BLK 1/" $OPENQXD_DIR/inclu
 perl -i -pe "s/#define NPROC3_BLK \\d+/#define NPROC3_BLK 1/" $OPENQXD_DIR/include/global.h
 
 
-cmake -S openQxD-devel/ -B openqxd-build \
+cmake --fresh -S openQxD-devel/ -B openqxd-build \
     -DCMAKE_BUILD_TYPE=Release \
     -DOPENQXD_ENABLE_QUDA=${QUDA} \
-    -DOPENQXD_QUDA_BUILD=${QUDA_BUILD_DIR}
+    -DOPENQXD_QUDA_BUILD=${QUDA_BUILD_DIR} \
+    -DOPENQXD_ENABLE_AVX=ON
 cmake --build openqxd-build -- -j8
